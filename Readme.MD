@@ -3,7 +3,7 @@
 # youtube shorts
 https://youtube.com/shorts/S0RiBfWRMSE?feature=share
 
-#youtube 1
+# youtube 1
 
 https://youtu.be/cEkZU7KR8AQ
 

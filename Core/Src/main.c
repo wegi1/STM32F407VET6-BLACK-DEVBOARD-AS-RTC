@@ -146,6 +146,7 @@ int main(void)
   CHECK_CALIBRATE_TIME_VALUES(); // check calibration time values and setup if needed
   //===========================================
   LCD_ILI9341_init();
+  check_work_orientation();
   lcdSetOrientation(LCD_WORK_ORIENTATION);
   //====================================================
 

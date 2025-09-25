@@ -121,7 +121,7 @@ void lcd_setup_picture(uint8_t pic_nr)
 			LCD_WORK_ORIENTATION,
 			LCD_WORK_ORIENTATION,
 			LCD_WORK_ORIENTATION,
-#define NOGITH
+#define NOGITH // you can change this parameter to GITH for other pictures rotation definition
 #ifdef GITH
 			LCD_PORTRAIT_NOT_WORK_ORIENTATION,
 			LCD_PORTRAIT_WORK_ORIENTATION,
@@ -137,9 +137,7 @@ void lcd_setup_picture(uint8_t pic_nr)
 	};
 
 
-//---
-extern	void check_work_orientation(void);
-//---
+
 
 
     check_work_orientation();
@@ -400,6 +398,7 @@ void test_print_RTC(void){
 
 					readPicFromFlash(tmpr3);
 					HAL_Delay(10000);
+					check_work_orientation();
 					lcdSetOrientation(LCD_WORK_ORIENTATION);
 					LCD_ClrScr(lcd_background_color);
 

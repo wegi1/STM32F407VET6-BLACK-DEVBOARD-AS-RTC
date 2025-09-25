@@ -15,6 +15,7 @@
 #include "GUI.h"
 #include "XPT2046_touch.h"
 #include "ili9341.h"
+#include "TP_operations.h"
 
 
 
@@ -33,6 +34,7 @@ extern uint8_t idx[];
 extern uint8_t idy[];
 extern uint8_t LCD_WORK_ORIENTATION;
 extern uint8_t LCD_NOT_WORK_ORIENTATION ;
+extern lcdPropertiesTypeDef  lcdProperties ;
 /****************************************************/
 /*                                                  */
 /* Local Variables                                  */
@@ -107,63 +109,99 @@ void Paint_Init(void);
 uint16_t Paint_Color = COLOR_565_WHITE;
 POINT   Paint_Display ;
 //===========================================
+//===========================================
 void Paint_Init(void){
 
-	lcdSetOrientation( LCD_NOT_WORK_ORIENTATION );
+
+
+
 	LCD_ClrScr(0);
 	draw_End();
 
 
-	lcdSetOrientation(LCD_WORK_ORIENTATION);
-	LCD_DisARectangular(0,0,40,40, COLOR_565_GREEN);
-	LCD_DisARectangular(0,40,40,80, COLOR_565_RED);
-	LCD_DisARectangular(0,80,40,120, COLOR_565_BLUE);
-	LCD_DisARectangular(0,120,40,160, COLOR_565_YELLOW);
-	LCD_DisARectangular(36,160,40,239, COLOR_565_WHITE);
-	LCD_DisARectangular(280,0,284,80, COLOR_565_WHITE);
-	LCD_DisARectangular(280,76,319,80, COLOR_565_WHITE);
+	LCD_DisARectangular(0,200,40,239, COLOR_565_GREEN); // COLOR_565_GREEN
+	LCD_DisARectangular(40,200,80,239, COLOR_565_RED);
+	LCD_DisARectangular(80,200,120,239, COLOR_565_BLUE);
+	LCD_DisARectangular(120,200,160,239, COLOR_565_YELLOW);
 
+	LCD_DisARectangular(160,200,319,202, COLOR_565_WHITE);
+	LCD_DisARectangular(239,200,241,239, COLOR_565_WHITE);
+}
+//===========================================
+extern void lets_calibrate_ts(uint8_t orientation);
+//===========================================
+void start_Paint(void){
+uint8_t      make_cal = 0;
+uint32_t     n_time, tst_time;
+n_time = HAL_GetTick();
+n_time += 500;
+uint8_t bckp = lcdProperties.orientation;
+
+uint8_t goahead = 0;
+
+    if(bckp != LCD_ORIENTATION_LANDSCAPE_ROTATE) {bckp = LCD_ORIENTATION_LANDSCAPE;}
+    lcdSetOrientation(bckp);
+
+    LCD_ClrScr(0);
+    draw_cross((lcdProperties.width >> 1), (lcdProperties.height >> 1), 0xffff);
+
+	while(make_cal == 0) {
+
+		if(HAL_GetTick() == n_time) { make_cal=1;}
+		if(XPT2046_TouchPressed() == true) {
+			LCD_ClrScr(0);
+			HAL_Delay(20);
+			while(XPT2046_TouchPressed() == true); // RELEASSE TS
+			HAL_Delay(30);
+
+			lets_calibrate_ts(LCD_ORIENTATION_LANDSCAPE_ROTATE);
+
+			lcdSetOrientation(bckp);
+			make_cal = 1;
+
+		}
+	}
+	Paint_Init();
+
+	while(1){
+		n_time = HAL_GetTick();
+		goahead=0;
+
+		while(goahead == 0) {
+			tst_time = HAL_GetTick();
+			if((tst_time - n_time) > 2000) { // idle time overflow
+				LCD_ClrScr(0);
+				HAL_Delay(10);
+				Paint_Color = COLOR_565_WHITE;
+				return; // EXIT
+			}
+			if(XPT2046_TouchPressed() == true) { goahead = 1 ;}
+		}
+
+		take_displayPoint(); // GET COORDS PRESSED PIXEL
+		if(Paint_Display.y > 200) { // Y CHOICE STRIP REACHED?
+			if(Paint_Display.x > 241) { // REINIT, CLEAR SCREEN ETC...
+				while(XPT2046_TouchPressed() == true); // RELEASSE TS
+				LCD_ClrScr(0);
+				HAL_Delay(10);
+				Paint_Color = COLOR_565_WHITE;
+				return; // EXIT
+			}
+			if(Paint_Display.x > 160) { // CLS KEY REGION REACHED ?
+				Paint_Init();
+				while(XPT2046_TouchPressed() == true); // RELEASSE TS
+				HAL_Delay(10);
+			} // TEST COLOR KEY
+			if(Paint_Display.x < 160) { Paint_Color = COLOR_565_YELLOW; }
+			if(Paint_Display.x < 120) { Paint_Color = COLOR_565_BLUE; }
+			if(Paint_Display.x < 80) { Paint_Color = COLOR_565_RED; }
+			if(Paint_Display.x < 40) { Paint_Color = COLOR_565_GREEN; }
+		}
+		if(Paint_Display.y < 200) { draw_bigPixel( (Paint_Display.x) , (Paint_Display.y)  , Paint_Color);}
+	}// END while(1) LOOP
 }
 //===========================================
 
-void start_Paint(void){
-	Paint_Init();
-	while(1){
-		take_displayPoint(); // GET COORS PRESSED PIXEL
-		if(Paint_Display.x < 40) { // Y CHOICE STRIP REACHED?
-			if(Paint_Display.y > 160) { // REINIT, CLEAR SCREEN ETC...
-				while(XPT2046_TouchPressed() != false); // RELEASSE TS
-				HAL_Delay(20);
-				Paint_Init();
-			} else { // TEST GREEN KEY
-				if(Paint_Display.y < 40) { // GREEN KEY REGION REACHED ?
-					Paint_Color = COLOR_565_GREEN;
-				} else { // TEST RED KEY
-					if(Paint_Display.y < 80) { // RED KEY REGION REACHED ?
-						Paint_Color = COLOR_565_RED;
-					} else { // TEST BLUE KEY
-						if(Paint_Display.y < 120) {// BLUE KEY REGION REACHED ?
-							Paint_Color = COLOR_565_BLUE;
-						} else { // IF NO - IT MUST BE YELLOW KEY PRESSED
-							Paint_Color = COLOR_565_YELLOW;
-						}
-					}
-				}
-			}
-		} else { // NOT REACHED LEFT KEYS STRIP SO TASTE EXIT KEY
-			if(Paint_Display.x > 280) { // END KEY REACHED REGIOM IN Y ?
-				if(Paint_Display.y < 80) { // IF Y WAS REACHED CHECK THE X COORD
-					while(XPT2046_TouchPressed() != false); // RELEASSE TS
-					LCD_ClrScr(0);
-					HAL_Delay(20);
-					return; // EXIT
-				}
-			} // END ALL OF KEYS PRESSED TESTS
-			// NOT ANY KEY PRESSED SO DRAW FAT PIXEL
-			draw_bigPixel( (Paint_Display.x) , (Paint_Display.y)  , Paint_Color);
-		}
-	} // END while(1) LOOP
-}
 //=======================================================
 void take_displayPoint(void){
 

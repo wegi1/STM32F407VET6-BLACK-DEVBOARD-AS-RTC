@@ -140,6 +140,12 @@
 #include "main.h"
 /*---------------------------------------------------------------------*/
 
+
+extern uint8_t LCD_WORK_ORIENTATION ;
+extern uint8_t LCD_NOT_WORK_ORIENTATION ;
+extern uint8_t LCD_PORTRAIT_WORK_ORIENTATION ;
+extern uint8_t LCD_PORTRAIT_NOT_WORK_ORIENTATION ;
+
 //lcd display
 
 
@@ -310,6 +316,7 @@ extern TIM_HandleTypeDef htim3;
 }
 static const uint8_t tab_orientations[] = {0x68, 0xe8, 0xa8, 0x28, 0x08, 0x48, 0x88, 0xc8};
 //----------------------
+//----------------------
 void lcdSetOrientation(lcdOrientationTypeDef value)
 {
 //	uint8_t data;
@@ -332,7 +339,27 @@ void lcdSetOrientation(lcdOrientationTypeDef value)
 	lcdProperties.height = y;
 	LCD_WriteReg(ILI9341_MEMCONTROL);
 	LCD_WriteData(lcdProperties.MADCTL_VAL);
+
+
+
+
+
+	LCD_WORK_ORIENTATION = lcdProperties.orientation;
+	if((LCD_WORK_ORIENTATION &3) != 0) {
+		LCD_WORK_ORIENTATION = LCD_ORIENTATION_LANDSCAPE_ROTATE;
+		LCD_NOT_WORK_ORIENTATION = LCD_ORIENTATION_LANDSCAPE ;
+		LCD_PORTRAIT_WORK_ORIENTATION = LCD_ORIENTATION_PORTRAIT_ROTATE_MIRROR;
+		LCD_PORTRAIT_NOT_WORK_ORIENTATION = LCD_ORIENTATION_PORTRAIT;
+	} else {
+		LCD_WORK_ORIENTATION = LCD_ORIENTATION_LANDSCAPE;
+		LCD_NOT_WORK_ORIENTATION = LCD_ORIENTATION_LANDSCAPE_ROTATE ;
+		LCD_PORTRAIT_WORK_ORIENTATION = LCD_ORIENTATION_PORTRAIT;
+		LCD_PORTRAIT_NOT_WORK_ORIENTATION = LCD_ORIENTATION_PORTRAIT_ROTATE_MIRROR;
+	}
+
 }
+//**************************************************************************************************************
+
 //**************************************************************************************************************
 
 //**************************************************************************************************************

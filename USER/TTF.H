@@ -9,7 +9,7 @@
 #define TTF_H_
 
 //================================================================================
-
+#include "main.h"
 #include "stdio.h"
 #include "stb_truetype.h"
 #include "string.h"
@@ -34,6 +34,8 @@ extern uint8_t LCD_WORK_ORIENTATION;
 extern uint8_t LCD_NOT_WORK_ORIENTATION ;
 extern uint8_t LCD_PORTRAIT_WORK_ORIENTATION ;
 extern uint8_t LCD_PORTRAIT_NOT_WORK_ORIENTATION ;
+
+extern lcdPropertiesTypeDef  lcdProperties;
 //===========================================================================================
 #define delay(x) HAL_Delay(x)
 
@@ -80,66 +82,70 @@ extern void lcd_set_background_color(uint16_t kolor)
 
 extern int render_biggestFont_portait(int pozx, int pozy, const char *text, const unsigned char *font_data, float pixel_height)
 {
-	//lcd_Direction(ROTATE_0);
-	if (!stbtt_InitFont(&font, font_data, stbtt_GetFontOffsetForIndex(font_data, 0)))
-	{
-		return 0;  // nie udało sie zainicjować fontów :(
-	}
+ 	//lcd_Direction(ROTATE_0);
+ 	if (!stbtt_InitFont(&font, font_data, stbtt_GetFontOffsetForIndex(font_data, 0)))
+ 	{
+ 		return 0;  // nie uda�o sie zainicjowa� font�w :(
+ 	}
 
-	float scale = stbtt_ScaleForPixelHeight(&font, pixel_height);
+ 	float scale = stbtt_ScaleForPixelHeight(&font, pixel_height);
 
-	int ascent, descent, line_gap;
-	stbtt_GetFontVMetrics(&font, &ascent, &descent, &line_gap);
-	int baseline = (int) (ascent * scale);
+ 	int ascent, descent, line_gap;
+ 	stbtt_GetFontVMetrics(&font, &ascent, &descent, &line_gap);
+ 	int baseline = (int) (ascent * scale);
 
-	// 🔹 Ustalamy stały rozmiar glifu (monospace)
-	int adv_width, lsb;
-	stbtt_GetCodepointHMetrics(&font, 'M', &adv_width, &lsb);  // szerokość największego znaku
-	int mono_w = (int) (adv_width * scale);
-	int text_len = strlen(text);
+ 	// Ustalamy staly rozmiar glifu (monospace)
+ 	int adv_width, lsb;
+ 	stbtt_GetCodepointHMetrics(&font, 'M', &adv_width, &lsb);  // szeroko�� najwi�kszego znaku
+ 	int mono_w = (int) (adv_width * scale);
+ 	int text_len = strlen(text);
 
-	int x0, y0, x1, y1;
-	stbtt_GetCodepointBitmapBox(&font, 'M', scale, scale, &x0, &y0, &x1, &y1);
-	int total_h = baseline + y1;
+ 	int x0, y0, x1, y1;
+ 	stbtt_GetCodepointBitmapBox(&font, 'M', scale, scale, &x0, &y0, &x1, &y1);
+ 	int total_h = baseline + y1;
 
 
+ 	// Renderowanie znak�w jeden po drugim
+ 	int pen_x = 0;
+ 	for (int i = 0; i < text_len; i++)
+ 	{
+ 		int cp = text[i];
+ 		int x0, y0, x1, y1;
+ 		stbtt_GetCodepointBitmapBox(&font, cp, scale, scale, &x0, &y0, &x1, &y1);
 
-	// 🔹 Renderowanie znaków jeden po drugim
-	int pen_x = 0;
-	for (int i = 0; i < text_len; i++)
-	{
-		int cp = text[i];
-		int x0, y0, x1, y1;
-		stbtt_GetCodepointBitmapBox(&font, cp, scale, scale, &x0, &y0, &x1, &y1);
+ 		int gw = x1 - x0;
+ 		int gh = y1 - y0;
 
-		int gw = x1 - x0;
-		int gh = y1 - y0;
-		unsigned char *g_bitmap = stbtt_GetCodepointBitmap(&font, scale, scale, cp, &gw, &gh, 0, 0);
-//		lcd_ClearScreen(lcd_background_color);
+ 		u16 winx_start = (((240 + mono_w) >> 1)  - gw - ((240 - mono_w) >> 1)) ; // center monospace in LCD
+ 		LCD_OpenWin(winx_start, (baseline + y0), (winx_start+gw-1), (baseline + y0 + gh));
+extern uint8_t idx[];
+extern uint8_t idy[];
+ 		my_utoa(&idx[0], mono_w);
+ 		my_utoa(&idy[0], gw);
 
-		for (int row = 0; row < gh; row++)
-		{
-			for (int col = 0; col < gw; col++)
-			{
-				unsigned char val = g_bitmap[row * gw + col];
-				int px = pen_x + col + (mono_w - gw) ;  // centrowanie w polu monospace
-				int py = baseline + y0 + row;
-				if (val > 0)
-				{
-					LCD_Put_Pixel(px, py, lcd_text_color);
-				} else {
-					LCD_Put_Pixel(px, py, lcd_background_color);
-				}
+ 		unsigned char *g_bitmap = stbtt_GetCodepointBitmap(&font, scale, scale, cp, &gw, &gh, 0, 0);
 
-			}
-		}
 
-		stbtt_FreeBitmap(g_bitmap, NULL);
-		pen_x += mono_w;
-	}
+ 		for (int row = 0; row < gh; row++)
+ 		{
+ 			for (int col = 0; col < gw; col++)
+ 			{
+ 				unsigned char val = g_bitmap[row * gw + col];
 
-	return total_h;
-}
+ 				if (val > 0)
+ 				{
+ 					LCD_RAM = lcd_text_color;
+ 				} else {
+ 					LCD_RAM = lcd_background_color;
+ 				}
+ 			}
+ 		}
+ 		stbtt_FreeBitmap(g_bitmap, NULL);
+ 		pen_x += mono_w;
+ 	}
+ 	return total_h;
+ }
+
 
 //================================================================================
 extern void Big_TTF_Demo(void)
@@ -169,7 +175,7 @@ extern int render_text_monospace(int pozx, int pozy, const char *text, const uns
 
 	if (!stbtt_InitFont(&font, font_data, stbtt_GetFontOffsetForIndex(font_data, 0)))
 	{
-		return 0;  // nie udało sie zainicjować fontów :(
+		return 0;
 	}
 
 	float scale = stbtt_ScaleForPixelHeight(&font, pixel_height);
@@ -178,22 +184,17 @@ extern int render_text_monospace(int pozx, int pozy, const char *text, const uns
 	stbtt_GetFontVMetrics(&font, &ascent, &descent, &line_gap);
 	int baseline = (int) (ascent * scale);
 
-	// 🔹 Ustalamy stały rozmiar glifu (monospace)
+	//  Ustalamy rozmiar glifu (monospace)
 	int adv_width, lsb;
-	stbtt_GetCodepointHMetrics(&font, 'M', &adv_width, &lsb);  // szerokość największego znaku
+	stbtt_GetCodepointHMetrics(&font, 'M', &adv_width, &lsb);  //
 	int mono_w = (int) (adv_width * scale);
 	int text_len = strlen(text);
-	int total_w = mono_w * text_len;
+
 	int x0, y0, x1, y1;
 	stbtt_GetCodepointBitmapBox(&font, 'M', scale, scale, &x0, &y0, &x1, &y1);
 	int total_h = baseline + y1;
-	uint16_t *bitmap2 = malloc(total_w * total_h * 2);
-	for (uint32_t p = 0; p < total_w * total_h; p++)
-	{
-		bitmap2[p] = lcd_background_color;
-	}
 
-	// 🔹 Renderowanie znaków jeden po drugim
+	//  Renderowanie znaeden po drugim
 	int pen_x = 0;
 	for (int i = 0; i < text_len; i++)
 	{
@@ -205,29 +206,34 @@ extern int render_text_monospace(int pozx, int pozy, const char *text, const uns
 		int gh = y1 - y0;
 		unsigned char *g_bitmap = stbtt_GetCodepointBitmap(&font, scale, scale, cp, &gw, &gh, 0, 0);
 
+
+
+
+
+		uint16_t center_x =  (pozx+pen_x);  // X center in monospace fields
+		uint16_t center_x_end = (center_x+mono_w-1);
+
+		uint16_t center_y = ((total_h - gh) >> 1) + pozy; // Y center in monospace fields
+
+		uint16_t buforek[320];
+
+
+		LCD_OpenWin( center_x, center_y, center_x_end , center_y+gh-1); // open window big as TTF fonts
 		for (int row = 0; row < gh; row++)
 		{
+			for(uint16_t it = 0; it< (mono_w) ; it++) { buforek[it] = lcd_background_color  ; }
 			for (int col = 0; col < gw; col++)
 			{
 				unsigned char val = g_bitmap[row * gw + col];
-				int px = pen_x + col + (mono_w - gw)  ;  // centrowanie w polu monospace
-				int py = baseline + y0 + row;
-				if (val > 0)
-				{
-					bitmap2[py * total_w + px] = lcd_text_color;
-				}
-				else
-				{
-					bitmap2[py * total_w + px] = lcd_background_color;
-				}
+				int px = col + (mono_w - gw)  ;  // centrowanie w polu monospace
+				if (val > 0) {	buforek[px] = lcd_text_color; }
 			}
+			for(uint16_t it = 0 ; it < mono_w ; it++) { LCD_RAM = buforek[it];}
 		}
-
 		stbtt_FreeBitmap(g_bitmap, NULL);
 		pen_x += mono_w;
 	}
-	lcd_Draw16BitBitmap(pozx, pozy, total_w, total_h, bitmap2);
-	free(bitmap2);
+
 	return total_h;
 }
 //===================================================================================
@@ -293,7 +299,7 @@ int lcd_render_text(int pozx, int pozy, const char *text, const unsigned char *f
 
 	if (!stbtt_InitFont(&font, font_data, stbtt_GetFontOffsetForIndex(font_data, 0)))
 	{
-		return 0;  // nie udało sie zainicjować fontów :(
+		return 0;  //
 	}
 
 	lcd_text_bounds(&font, text, pixel_height, &text_width, &text_height);
@@ -322,35 +328,23 @@ int lcd_render_text(int pozx, int pozy, const char *text, const unsigned char *f
 
 		unsigned char *bitmap = stbtt_GetCodepointBitmap(&font, scale, scale, *p, &width, &height, &x0, &y0);
 
+		LCD_OpenWin((pozx + x), (pozy+baseline + y0), (pozx + x+width-1), (pozy+baseline + y0 + height-1));
 
-		bitmap2 = malloc(width * height * 2);  // bitmapa dla jednego znaku
-		memset(bitmap2, 0, width * height * 2);
-
-		for (int col = 0; col < width; col++)
+		for (int row = 0; row < height; row++)
 		{
-			for (int row = 0; row < height; row++)
+			for (int col = 0; col < width; col++)
 			{
 				uint8_t value = bitmap[row * width + col];
 				if (value > 0)
 				{
-
-					bitmap2[col + row * width] = lcd_text_color;
-					//lcd_WritePixel(pozx+x + col ,pozy+ (row + baseline + y0),lcd_text_color);
-
+					LCD_RAM = lcd_text_color;
 				}
 				else
 				{
-
-					bitmap2[col + row * width] = lcd_background_color;
-					//lcd_WritePixel(pozx+x + col , pozy+(row + baseline + y0),lcd_background_color);
-
+					LCD_RAM = lcd_background_color;
 				}
 			}
 		}
-
-		lcd_Draw16BitBitmap(pozx + x, pozy + baseline + y0, width, height, bitmap2);
-		free(bitmap2);
-		//}
 
 		stbtt_FreeBitmap(bitmap, NULL);
 
@@ -360,6 +354,7 @@ int lcd_render_text(int pozx, int pozy, const char *text, const unsigned char *f
 
 	return text_height;
 }
+
 //===================================================================================
 
 extern int lcd_text_boxed(int pozx, int pozy, const char *text, const unsigned char *font_data, float pixel_height)
@@ -388,19 +383,40 @@ extern int lcd_fade_text(int pozx, int pozy, const char *text, const unsigned ch
 
 //===================================================================================
 extern void draw_End(void){
-	if(LCD_WORK_ORIENTATION == LCD_ORIENTATION_LANDSCAPE_ROTATE ) {
-		lcdSetOrientation( LCD_ORIENTATION_PORTRAIT );
-	} else {
-		lcdSetOrientation( LCD_ORIENTATION_PORTRAIT_ROTATE_MIRROR );
-	}
-	lcd_text_boxed(15, 0, "End", dum1_ttf, 35);
-	lcd_text_boxed(175, 285, "CLS", dum1_ttf, 35);
+	if(lcdProperties.orientation > 3 ) { lcdSetOrientation( LCD_ORIENTATION_LANDSCAPE ); }
+	lcd_text_boxed(170, 203, "CLS", digital_7_ttf, 25);
+	lcd_text_boxed(250, 203, "END", digital_7_ttf, 25);
 
 }
 //===================================================================================
+//=====================================================================================
+extern void make_fade(void){
 
+	if(lcdProperties.orientation > 3 ) { lcdSetOrientation( LCD_ORIENTATION_LANDSCAPE ); }
+	LCD_ClrScr(0);
+
+	for(uint32_t fader = 0; fader < 120; fader ++){
+		lcd_fade_text(10, 60, "FA:DE" , digital_7_ttf, 86);
+	}
+}
+
+//=====================================================================================
 //===================================================================================
-
+//=====================================================================================
+int lcd_mono_t_box(int pozx, int pozy, const char *text, int data_font, float pixel_height)
+{
+	if(data_font == 0) {	return lcd_mono_text_boxed(pozx, pozy, text, digital_7_ttf, pixel_height);}
+	if(data_font == 1) {	return lcd_mono_text_boxed(pozx, pozy, text, dum1_ttf, pixel_height);}
+    return 0;
+}
+//=====================================================================================
+int lcd_t_box(int pozx, int pozy, const char *text, int data_font, float pixel_height)
+{
+	if(data_font == 0) {	return lcd_text_boxed(pozx, pozy, text, digital_7_ttf, pixel_height);}
+	if(data_font == 1) {	return lcd_text_boxed(pozx, pozy, text, dum1_ttf, pixel_height);}
+    return 0;
+}
+//=====================================================================================
 
 //===================================================================================
 

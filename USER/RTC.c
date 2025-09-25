@@ -104,12 +104,15 @@ uint8_t test_stop(void) {
 	if(result != 0){ HAL_Delay(20) ;}
 	return result;
 }
+//=====================================================================================
 void lcd_setup_picture(uint8_t pic_nr)
 {
 	uint8_t dana ;
 	lcdOrientationTypeDef dana2;
 
-	lcdOrientationTypeDef setup_pic[] = {
+
+
+	const lcdOrientationTypeDef setup_pic[] = {
 			LCD_WORK_ORIENTATION,
 			LCD_PORTRAIT_NOT_WORK_ORIENTATION,
 			LCD_PORTRAIT_WORK_ORIENTATION,
@@ -118,7 +121,7 @@ void lcd_setup_picture(uint8_t pic_nr)
 			LCD_WORK_ORIENTATION,
 			LCD_WORK_ORIENTATION,
 			LCD_WORK_ORIENTATION,
-#define GITH
+#define NOGITH
 #ifdef GITH
 			LCD_PORTRAIT_NOT_WORK_ORIENTATION,
 			LCD_PORTRAIT_WORK_ORIENTATION,
@@ -133,6 +136,14 @@ void lcd_setup_picture(uint8_t pic_nr)
 #endif
 	};
 
+
+//---
+extern	void check_work_orientation(void);
+//---
+
+
+    check_work_orientation();
+	lcdSetOrientation(LCD_WORK_ORIENTATION);
 	dana = pic_nr;
 	if (dana > 12) {dana =0;}
 	dana2 =  setup_pic[dana];
@@ -152,7 +163,7 @@ uint32_t readPicFromFlash(uint8_t pic_nr)
 	uint8_t * tmpr1 = (uint8_t*) &ADDR_PIC;
 	uint8_t * tmpr2 = (uint8_t*) &command;
 
-//	lcd_setup_picture(pic_nr);
+	lcd_setup_picture(pic_nr);
 	ADDR_PIC = pic_nr * (600*256);
 
 	i2 = 3;
@@ -178,6 +189,7 @@ uint32_t readPicFromFlash(uint8_t pic_nr)
 
   return 0;
 }
+
 
 //=====================================================================================================================
 
@@ -385,7 +397,7 @@ void test_print_RTC(void){
 
 					tmpr3 = tmpr2 / 5;
 					TIM4_IRQHandler(); // stop colon blinking
-					lcd_setup_picture(tmpr3);
+
 					readPicFromFlash(tmpr3);
 					HAL_Delay(10000);
 					lcdSetOrientation(LCD_WORK_ORIENTATION);
@@ -513,7 +525,6 @@ void next_page(void) {
 // TODO: ACTUAL FUNCTION MAKING
 //=====================================================================================================================
 //=====================================================================================================================
-
 //=====================================================================================================================
 void SET_CENTURY(void) {
 
@@ -530,8 +541,10 @@ void SET_CENTURY(void) {
 //===================================================================================================
 			lcd_mono_text_boxed(220, 50, "+", digital_7_ttf, 86);
 			lcd_mono_text_boxed(0, 50, "-", digital_7_ttf, 86);
-			sprintf(tekst, "%02d", (int) century);
-			lcd_mono_text_boxed(80, 50, "  ", digital_7_ttf, 86);
+			sprintf(tekst, "%d", (int) century);
+			lcd_text_color = 0;
+			lcd_mono_text_boxed(80, 78, "000", digital_7_ttf, 50);
+			lcd_text_color = 0xffff;
 
 			if(century < 0) {
 				lcd_mono_text_boxed(80, 78, tekst, digital_7_ttf, 50);
@@ -563,6 +576,8 @@ void SET_CENTURY(void) {
 		}
 	}
 }
+
+//=====================================================================================================================
 
 //=====================================================================================================================
 void READ_CENTURY(void) {
@@ -691,6 +706,7 @@ void night_light(void){
 
 
 }
+
 //=====================================================================================================================
 void slideshow_disable(void){
 	uint8_t s_mode, action;
@@ -706,6 +722,10 @@ void slideshow_disable(void){
 			lcd_text_boxed(25, 5, "SLIDE MODE", dum1_ttf, 42);
 			sprintf(tekst, "YES");
 			if(s_mode  != 0) { sprintf(tekst, "NO!"); }
+
+			lcd_text_color = 0;
+			lcd_mono_text_boxed(105, 85, "000", digital_7_ttf, 36);
+			lcd_text_color = 0xffff;
 
 			lcd_mono_text_boxed(105, 85, tekst, digital_7_ttf, 36);
 			put_DATE_number();
@@ -733,6 +753,8 @@ void slideshow_disable(void){
 		}
 	}
 }
+//=====================================================================================================================
+
 //=====================================================================================================================
 void check_slideshow() {
 	run_slideshow = (uint8_t) (HAL_RTCEx_BKUPRead(&hrtc, RTC_BKP_DR6) & 0x01 );
@@ -852,19 +874,24 @@ void DEMOS_RUN(void) {
 
 //=====================================================================================================================
 void SLIDE_SHOW(void) {
-	uint8_t i;
+	uint8_t i, bckp;
 
+	bckp = lcdProperties.orientation;
 	if(test_pressed_point(159, 319, 45, 95) == true)  {
 		wait_for_releasseTS(); // wait for releasse TS
+
+
 		LCD_ClrScr(lcd_background_color);
 
 		for( i=0; i<12; i++) {
-			lcd_setup_picture(i);
+			check_work_orientation();
+			lcdSetOrientation(LCD_WORK_ORIENTATION);
+
 			readPicFromFlash(i);
 			get_pressed_point();
 			wait_for_releasseTS(); // wait for releasse TS
 		}
-		lcdSetOrientation(LCD_WORK_ORIENTATION);
+		lcdSetOrientation(bckp);
 
 		wait_for_releasseTS(); // wait for releasse TS
 		LCD_ClrScr(lcd_background_color);
@@ -903,6 +930,7 @@ void test_page(void) {
 	}
 }
 //=====================================================================================================================
+//=====================================================================================================================
 void TIM_CALIBRATE_SETUP(void) {
 	uint8_t action ;
 	if((test_pressed_point(159, 319, 145, 195)) == true)  {
@@ -913,35 +941,42 @@ void TIM_CALIBRATE_SETUP(void) {
 		while(1){
 			lcd_text_boxed(0, 5, "SET TIM CALIBR.", dum1_ttf, 42);
 
-			sprintf(tekst, "   ");
-			lcd_mono_text_boxed(130, 55, tekst, digital_7_ttf, 36); // clear field by spaces
+
+			lcd_text_color = lcd_background_color;
+			lcd_mono_text_boxed(130, 55, "000", digital_7_ttf, 36); // clear field by spaces
+			lcd_mono_text_boxed(135, 180,"000", digital_7_ttf, 36);
+			lcd_text_color = 0xFFFF;
 			sprintf(tekst, "%d", ((int)SECONDS_TO_CALIBRATE));
+
 
 			if(SECONDS_TO_CALIBRATE < 0) {
 				lcd_mono_text_boxed(130, 55, tekst, digital_7_ttf, 36); // print seconds
 			} else {
 				lcd_mono_text_boxed(145, 55, tekst, digital_7_ttf, 36); // print seconds
 			}
-			sprintf(tekst, "%3d", ((int)HOURS_CALIBRATE_PERIOD));
-			lcd_mono_text_boxed(125, 110, tekst, digital_7_ttf, 36); // print seconds
+
+
+
+			sprintf(tekst, "%d", ((int)HOURS_CALIBRATE_PERIOD));
+			lcd_mono_text_boxed(135, 180, tekst, digital_7_ttf, 36); // print seconds
 //==================================================================
 			lcd_mono_text_boxed(260, 55, "+", digital_7_ttf, 36);
 			lcd_mono_text_boxed(20, 55, "-", digital_7_ttf, 36);
-			lcd_mono_text_boxed(260, 110, "+", digital_7_ttf, 36);
-			lcd_mono_text_boxed(20, 110, "-", digital_7_ttf, 36);
+			lcd_mono_text_boxed(260, 180, "+", digital_7_ttf, 36);
+			lcd_mono_text_boxed(20, 180, "-", digital_7_ttf, 36);
 
 			lcd_text_boxed(85, 68, "SEC", dum1_ttf, 28);
-			lcd_text_boxed(85, 123, "HRS", dum1_ttf, 28);
+			lcd_text_boxed(85, 180, "HRS", dum1_ttf, 28);
 
-			lcd_text_boxed(115, 180, "DONE", dum1_ttf, 42);
-			LCD_No_Fill_Draw(lcd_text_color, 80, 172, 240, 230); // DONE
+			lcd_text_boxed(110, 118, "DONE", dum1_ttf, 42);
+			LCD_No_Fill_Draw(lcd_text_color, 83, 114, 230, 165); // DONE
 
 
 			LCD_No_Fill_Draw(lcd_text_color, 0, 55, 80, 110); // minus sec
-			LCD_No_Fill_Draw(lcd_text_color, 0, 110, 80, 165); // minus hrs
+			LCD_No_Fill_Draw(lcd_text_color, 0, 172, 80, 230); // minus hrs
 
 			LCD_No_Fill_Draw(lcd_text_color, 235, 55, 318, 110); // plus sec
-			LCD_No_Fill_Draw(lcd_text_color, 235, 110, 318, 165); // plus hrs
+			LCD_No_Fill_Draw(lcd_text_color, 235, 172, 318, 230); // plus hrs
 //===================================================================
 
 			action = calibr_action();
@@ -983,16 +1018,25 @@ uint8_t calibr_action(void) {
 	while(1) {
 		get_pressed_point();
 		// DONE test
-		if((test_pressed_point(80, 240, 172, 230)) == true) { return 5;} // DONE
+		if((test_pressed_point(80, 240, 115, 165)) == true) { return 5;} // DONE
 
 		if((test_pressed_point(0, 80, 55, 110)) == true) { return 1;} // minus sec
-		if((test_pressed_point(0, 80, 110, 165)) == true) { return 3;} // minus hrs
+		if((test_pressed_point(0, 80, 172, 230)) == true) { return 3;} // minus hrs
 
 		if((test_pressed_point(235, 318, 55, 110)) == true) { return 2;} // plus sec
-		if((test_pressed_point(235, 318, 110, 165)) == true) { return 4;} // plus hrs
+		if((test_pressed_point(235, 318, 172, 230)) == true) { return 4;} // plus hrs
 
 	}
 }
+//if((test_pressed_point(80, 240, 172, 230)) == true) { return 5;} // DONE
+//
+//if((test_pressed_point(0, 80, 55, 110)) == true) { return 1;} // minus sec
+//if((test_pressed_point(0, 80, 115, 165)) == true) { return 3;} // minus hrs
+//
+//if((test_pressed_point(235, 318, 55, 110)) == true) { return 2;} // plus sec
+//if((test_pressed_point(235, 318, 110, 165)) == true) { return 4;} // plus hrs
+//=====================================================================================================================
+
 //=====================================================================================================================
 void CHECK_CALIBRATE_TIME_VALUES(void){
 	uint32_t hours ;
@@ -1035,6 +1079,10 @@ void night_mode(void) {
 
 			n_mode = n_mode &0x01;
 
+			lcd_text_color = 0;
+			lcd_mono_text_boxed(105, 85, "000", digital_7_ttf, 36);
+			lcd_text_color = 0xffff;
+
 			lcd_text_boxed(25, 5, "NIGHT MODE", dum1_ttf, 42);
 			sprintf(tekst, "YES");
 			if(n_mode  != 0) { sprintf(tekst, "NO!"); }
@@ -1070,6 +1118,8 @@ void night_mode(void) {
 
 }
 //=====================================================================================================================
+
+//=====================================================================================================================
 void COLOR_FONTS(void) {
 	uint8_t action;
 	uint32_t font_VAL = HAL_RTCEx_BKUPRead(&hrtc, RTC_BKP_DR2);
@@ -1080,6 +1130,11 @@ void COLOR_FONTS(void) {
 
 		while(1){
 			lcd_text_boxed(25, 5, "COLOR FONTS", dum1_ttf, 42);
+
+			lcd_text_color = 0;
+			lcd_mono_text_boxed(105, 85, "000", digital_7_ttf, 36);
+			lcd_text_color = 0xffff;
+
 			sprintf(tekst, "YES");
 			if((font_VAL &1) != 0) { sprintf(tekst, "NO!"); }
 			lcd_mono_text_boxed(105, 85, tekst, digital_7_ttf, 36);
@@ -1174,7 +1229,10 @@ void TTF_test(void) {
 		wait_for_releasseTS(); // wait for releasse TS
 		Pressed_Point.x =0;
 		Pressed_Point.y =0;
+		check_work_orientation();
+		lcdSetOrientation(LCD_WORK_ORIENTATION);
 	}
+
 }
 //=====================================================================================================================
 

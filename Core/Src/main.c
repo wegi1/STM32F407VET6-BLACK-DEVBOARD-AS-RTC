@@ -149,7 +149,7 @@ int main(void)
   lcdSetOrientation(LCD_WORK_ORIENTATION);
   //====================================================
 
-  lcd_setup_picture(7);
+
   readPicFromFlash(7);
 
   for (int t = 65535; t > 0; t -= 32)

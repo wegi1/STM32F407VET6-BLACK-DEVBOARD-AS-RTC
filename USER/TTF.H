@@ -402,21 +402,6 @@ extern void make_fade(void){
 
 //=====================================================================================
 //===================================================================================
-//=====================================================================================
-int lcd_mono_t_box(int pozx, int pozy, const char *text, int data_font, float pixel_height)
-{
-	if(data_font == 0) {	return lcd_mono_text_boxed(pozx, pozy, text, digital_7_ttf, pixel_height);}
-	if(data_font == 1) {	return lcd_mono_text_boxed(pozx, pozy, text, dum1_ttf, pixel_height);}
-    return 0;
-}
-//=====================================================================================
-int lcd_t_box(int pozx, int pozy, const char *text, int data_font, float pixel_height)
-{
-	if(data_font == 0) {	return lcd_text_boxed(pozx, pozy, text, digital_7_ttf, pixel_height);}
-	if(data_font == 1) {	return lcd_text_boxed(pozx, pozy, text, dum1_ttf, pixel_height);}
-    return 0;
-}
-//=====================================================================================
 
 //===================================================================================
 

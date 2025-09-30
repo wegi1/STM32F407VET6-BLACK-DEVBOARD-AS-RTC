@@ -86,7 +86,7 @@ void lets_calibrate_ts(uint8_t orientation)
 
 
 		while(XPT2046_TouchPressed() == false){;} // wait for press touch screen
-		HAL_Delay(1000); // debounce tactic delay
+		HAL_Delay(2000); // debounce tactic delay
 
 		while( XPT2046_GetFastCoordinates(&x01 , &y01) != true);
 

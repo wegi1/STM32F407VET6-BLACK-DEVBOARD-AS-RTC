@@ -10,7 +10,7 @@
 #include <time.h>
 #include "demos.h"
 #include "ili9341.h"
-#include "w25qxx.h"
+
 #include "TP_operations.h"
 #include "XPT2046_touch.h"
 #include "TTF.H"
@@ -137,7 +137,9 @@ void lcd_setup_picture(uint8_t pic_nr)
 	};
 
 
-
+////---
+//extern	void check_work_orientation(void);
+////---
 
 
     check_work_orientation();
@@ -389,7 +391,7 @@ void test_print_RTC(void){
 		//TODO image
 		sprintf(tekst, "%02d", ss);
 		lcd_mono_text_boxed(0, 125, tekst, digital_7_ttf, 40);
-		if(ss == 25) {
+		if(ss == 5) {
 			if(run_slideshow == 0) {
 				if(tmpr2 %5 == 0) {
 

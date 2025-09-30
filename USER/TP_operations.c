@@ -12,25 +12,28 @@
 
 #include "GUI.h"
 
+
 extern void make_fade(void);
 extern SPI_HandleTypeDef hspi2;
 extern lcdPropertiesTypeDef  lcdProperties;
 //==========================================
-// Domyślnie są to dane touchtype=0.
+// DomyĹ›lnie sÄ… to dane touchtype=0.
 u8 CMD_RDX=0XD0;
 u8 CMD_RDY=0X90;
 u16 x01, y01;
 //================================================
-#define READ_TIMES 5    // ilość odczytów
-#define LOST_VAL 1      // odrzucone wartości
+#define READ_TIMES 5    // iloĹ›Ä‡ odczytĂłw
+#define LOST_VAL 1      // odrzucone wartoĹ›ci
 #define ERR_RANGE 50 // Zakres tolerancji
 
 
+
 extern const unsigned char digital_7_ttf[] ;
-//extern const unsigned char dum1_ttf[];
+extern const unsigned char dum1_ttf[];
 
 extern int lcd_text_boxed(int pozx, int pozy, const char *text, const unsigned char *font_data, float pixel_height);
 extern int lcd_mono_text_boxed(int pozx, int pozy, const char *text, const unsigned char *font_data, float pixel_height);
+
 
 //===================================================
 extern POINT PIXEL_displaySample[];

@@ -85,7 +85,7 @@ extern int render_biggestFont_portait(int pozx, int pozy, const char *text, cons
  	//lcd_Direction(ROTATE_0);
  	if (!stbtt_InitFont(&font, font_data, stbtt_GetFontOffsetForIndex(font_data, 0)))
  	{
- 		return 0;  // nie uda³o sie zainicjowaæ fontów :(
+ 		return 0;  // nie udaï¿½o sie zainicjowaï¿½ fontï¿½w :(
  	}
 
  	float scale = stbtt_ScaleForPixelHeight(&font, pixel_height);
@@ -96,7 +96,7 @@ extern int render_biggestFont_portait(int pozx, int pozy, const char *text, cons
 
  	// Ustalamy staly rozmiar glifu (monospace)
  	int adv_width, lsb;
- 	stbtt_GetCodepointHMetrics(&font, 'M', &adv_width, &lsb);  // szerokoœæ najwiêkszego znaku
+ 	stbtt_GetCodepointHMetrics(&font, 'M', &adv_width, &lsb);  // szerokoï¿½ï¿½ najwiï¿½kszego znaku
  	int mono_w = (int) (adv_width * scale);
  	int text_len = strlen(text);
 
@@ -105,7 +105,7 @@ extern int render_biggestFont_portait(int pozx, int pozy, const char *text, cons
  	int total_h = baseline + y1;
 
 
- 	// Renderowanie znaków jeden po drugim
+ 	// Renderowanie znakï¿½w jeden po drugim
  	int pen_x = 0;
  	for (int i = 0; i < text_len; i++)
  	{

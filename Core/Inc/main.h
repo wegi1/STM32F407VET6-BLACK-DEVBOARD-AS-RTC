@@ -70,7 +70,6 @@ extern void my_htoa32(uint8_t * buf, uint32_t data);
 #define BTN0_GPIO_Port GPIOE
 #define LCDTP_IRQ_Pin GPIO_PIN_5
 #define LCDTP_IRQ_GPIO_Port GPIOC
-#define LCDTP_IRQ_EXTI_IRQn EXTI9_5_IRQn
 #define FLASH_CS_Pin GPIO_PIN_0
 #define FLASH_CS_GPIO_Port GPIOB
 #define LCDTP_CS_Pin GPIO_PIN_12

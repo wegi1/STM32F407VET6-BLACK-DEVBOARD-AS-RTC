@@ -5,11 +5,30 @@
  *      Author: BOLO
  */
 
+#include "main.h"
 #include "GUI.h"
 
 #include "ili9341.h"
 #include "inttypes.h"
 #include "stdlib.h"
+#include <stdarg.h>
+#include <stdio.h>
+//=====================================================================================
+//**************************************************************************************
+extern lcdPropertiesTypeDef  lcdProperties ;
+static lcdFontPropTypeDef lcdFont = {COLOR_565_YELLOW, COLOR_565_BLACK, &Font24, 1};
+//static lcdFontPropTypeDef lcdFont = {COLOR_565_YELLOW, COLOR_565_BLACK, 0, 1};
+static lcdCursorPosTypeDef cursorXY = {0, 0};
+
+//**************************************************************************************
+//**************
+void lcdSetCursor(unsigned short x, unsigned short y)
+{
+	cursorXY.x = x;
+	cursorXY.y = y;
+	//LCD_OpenWin(x, y, x, y);
+}
+//*********************
 
 /********************************************************************************************************
  *  Function: LCD_DisALoop
@@ -52,12 +71,14 @@ void LCD_DisALoop(u16 x0, u16 y0, u8 r, u16 Color)
  *  Output: none
  *  brief: none
  ********************************************************************************************************/
-void LCD_DisASquare(u16 x0, u16 y0, u16 wide, u16 Color)
+void LCD_DisASquare(uint16_t x0, uint16_t y0, uint16_t wide, uint16_t Color)
 {
     u32 i;
+
     LCD_OpenWin(x0, y0, x0+wide-1, y0+wide-1);
-    for(i = 0; i < (wide*wide); i++)
-        LCD_RAM = Color;
+    for(i = 0; i < (wide*wide); i++) {
+    	LCD_RAM = Color;
+    }
 }
 /********************************************************************************************************
  *  Function: LCD_DisARectangular
@@ -71,6 +92,7 @@ void LCD_DisARectangular(u16 x0, u16 y0, u16 x1, u16 y1, u16 Color)
     u32 i;
     u16 x00, x01, y00, y01;
 
+
     if(x0 < x1) {x00 = x0; x01 = x1;}
     else {x00 = x1; x01 = x0;}
 
@@ -79,12 +101,18 @@ void LCD_DisARectangular(u16 x0, u16 y0, u16 x1, u16 y1, u16 Color)
 
     LCD_OpenWin(x00, y00, x01, y01);
 
-    for(i = 0; i <= ((1+x01-x00)*(1+y01-y00)); i++) {LCD_RAM = Color;}
+    for(i = 0; i <= ((1+x01-x00)*(1+y01-y00)); i++) {
+    	LCD_RAM = Color;
+    }
 }
 //-------------------------------------
 uint16_t LCD_RandColor(void)
 {
-    return HAL_RNG_GetRandomNumber(&hrng)&0x0000FFFF;
+	extern	RNG_HandleTypeDef hrng;
+
+	uint32_t data ;
+	HAL_RNG_GenerateRandomNumber(&hrng, &data);
+	return  data &0x0000FFFF;
 }
 //------------------------------------
 void LCD_DrawLine(u16 color, u16 x1, u16 y1, u16 x2, u16 y2)
@@ -132,7 +160,7 @@ void LCD_DrawLine(u16 color, u16 x1, u16 y1, u16 x2, u16 y2)
         }
     }
 }
-//—————————————————————
+//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 //------------------------------------
 /*******************************************************************************************************
  * drawing no fill rectangle
@@ -218,6 +246,147 @@ void writeFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color)
 void writeFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color)
 {
     LCD_DrawLine(color, x, y, x+w-1, y);
+}
+void BSP_LCD_DrawVLine(uint16_t Xpos, uint16_t Ypos, uint16_t Length) {
+	writeFastVLine(Xpos, Ypos, Length, lcdFont.TextColor);
+}
+/**
+ * \brief Print the specified Text
+ *
+ * \param fmt	Format text
+ * \param
+ *
+ * \return void
+ */
+void lcdPrintf(const char *fmt, ...)
+{
+	static char buf[256];
+	char *p;
+	va_list lst;
+
+	va_start(lst, fmt);
+	vsprintf(buf, fmt, lst);
+	va_end(lst);
+
+	p = buf;
+	while (*p)
+	{
+		if (*p == '\n')
+		{
+			cursorXY.y += lcdFont.pFont->Height;
+			cursorXY.x = 0;
+		}
+		else if (*p == '\r')
+		{
+			// skip em
+		}
+		else if (*p == '\t')
+		{
+			cursorXY.x += lcdFont.pFont->Width * 4;
+		}
+		else
+		{
+			lcdDrawChar(cursorXY.x, cursorXY.y, *p, lcdFont.TextColor, lcdFont.BackColor);
+			cursorXY.x += lcdFont.pFont->Width;
+			if (lcdFont.TextWrap && (cursorXY.x > (lcdProperties.width - lcdFont.pFont->Width)))
+			{
+				cursorXY.y += lcdFont.pFont->Height;
+				cursorXY.x = 0;
+			}
+		}
+		p++;
+
+		if (cursorXY.y >= lcdProperties.height)
+		{
+			cursorXY.y = 0;
+		}
+	}
+}
+//=======================================================
+/**
+ * \brief Draws a character at the specified coordinates
+ *
+ * \param x			The x-coordinate
+ * \param y			The y-coordinate
+ * \param c			Character
+ * \param color		Character color
+ * \param bg		Background color
+ * \param size		Character Size
+ *
+ * \return void
+ */
+void lcdDrawChar(int16_t x, int16_t y, unsigned char c, uint16_t color, uint16_t bg)
+{
+	if ((x >= lcdProperties.width) || 			// Clip right
+			(y >= lcdProperties.height) || 		// Clip bottom
+			((x + lcdFont.pFont->Width) < 0) || // Clip left
+			((y + lcdFont.pFont->Height) < 0))  // Clip top
+		return;
+
+	uint8_t fontCoeff = lcdFont.pFont->Height / 8;
+	uint8_t xP = 0;
+
+	for(uint8_t i = 0; i < lcdFont.pFont->Height; i++)
+	{
+		uint8_t line;
+
+		for(uint8_t k = 0; k < fontCoeff; k++)
+		{
+			line = lcdFont.pFont->table[((c - 0x20) * lcdFont.pFont->Height * fontCoeff) + (i * fontCoeff) + k];
+
+			for(uint8_t j = 0; j < 8; j++)
+			{
+				if((line & 0x80) == 0x80)
+				{
+					LCD_Put_Pixel(x + j + xP, y + i, color);
+				}
+				else if (bg != color)
+				{
+					LCD_Put_Pixel(x + j + xP, y + i, bg);
+				}
+				line <<= 1;
+			}
+
+			xP += 8;
+		}
+
+		xP = 0;
+	}
+}
+
+/**
+ * \brief Sets the text color
+ *
+ * \param c		Text color
+ * \param b		Background color
+ *
+ * \return void
+ */
+void lcdSetTextColor(uint16_t c, uint16_t b)
+{
+	lcdFont.TextColor = c;
+	lcdFont.BackColor = b;
+}
+void lcdSetTextFont(sFONT* font)
+{
+	lcdFont.pFont = font;
+}
+u16  BSP_LCD_GetTextColor(void) {
+	return (u16) lcdFont.TextColor ;
+}
+void BSP_LCD_FillRect(u16 x, u16 y, u16 width, u16 height) {
+
+	LCD_DisARectangular(x, y, (x+width-1), (y+height-1), lcdFont.TextColor);
+}
+void BSP_LCD_DrawHLine(uint16_t Xpos, uint16_t Ypos, uint16_t Length) {
+	writeFastHLine(Xpos, Ypos, Length, lcdFont.TextColor);
+}
+void BSP_LCD_FillCircle(int16_t x0, int16_t y0, int16_t r)
+{
+	fillCircle(x0, y0, r, lcdFont.TextColor);
+}
+void BSP_LCD_SetTextColor(u16 color) {
+	lcdFont.TextColor = color;
 }
 /*******************************************************************************************************
  * end of screen functions

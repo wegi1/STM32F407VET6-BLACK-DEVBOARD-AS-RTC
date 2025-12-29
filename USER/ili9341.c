@@ -135,22 +135,24 @@
 
 #include "ili9341.h"
 #include "stdlib.h"
-#include "demos.h"
-#include "GUI.h"
+//#include "demos.h"
+//#include "GUI.h"
 #include "main.h"
 /*---------------------------------------------------------------------*/
-
-
-extern uint8_t LCD_WORK_ORIENTATION ;
-extern uint8_t LCD_NOT_WORK_ORIENTATION ;
-extern uint8_t LCD_PORTRAIT_WORK_ORIENTATION ;
-extern uint8_t LCD_PORTRAIT_NOT_WORK_ORIENTATION ;
 
 //lcd display
 
 
 //lcd bottom funtions
+//extern uint8_t LCD_WORK_ORIENTATION ;
+//extern uint8_t LCD_NOT_WORK_ORIENTATION ;
+//extern uint8_t LCD_PORTRAIT_WORK_ORIENTATION ;
+//extern uint8_t LCD_PORTRAIT_NOT_WORK_ORIENTATION ;
 
+uint8_t LCD_WORK_ORIENTATION =  LCD_ORIENTATION_LANDSCAPE;
+uint8_t LCD_NOT_WORK_ORIENTATION ;
+uint8_t LCD_PORTRAIT_WORK_ORIENTATION ;
+uint8_t LCD_PORTRAIT_NOT_WORK_ORIENTATION ;
 /*---------------------------------------------------------------------*/
 static const uint8_t init_tab[] = {
         ILI_PCB, 3, 0x00, 0xC1, 0X30, /* 0xCF */ \
@@ -283,9 +285,16 @@ void LCD_WriteData(u16 data)
  ***************************************************************************************************/
 void LCD_ILI9341_init(void)
 {
+	// TODO reset sequence with register 0x01
+#define setPWM(x) __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, x);
+extern TIM_HandleTypeDef htim3;
+
     u32 i = 0;
     u32 i2;
     u8 counter;
+
+    HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4); // enable PWM back light
+    setPWM(0);
 
     //--------------
     while(init_tab[i] != 0)
@@ -308,14 +317,13 @@ void LCD_ILI9341_init(void)
     }
 
     lcdSetOrientation(LCD_ORIENTATION_PORTRAIT);
-    LCD_ClrScr(COLOR_565_BLACK);  // init screen as black
-extern TIM_HandleTypeDef htim3;
-#define setPWM(x) __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_4, x);
-    setPWM(65535);
-//    HAL_GPIO_WritePin(LCD_BL_GPIO_Port, LCD_BL_Pin,GPIO_PIN_SET);  // enable LCD back light
+    LCD_ClrScr(0);  // init screen as black
+
+
+    setPWM(26000);
+
 }
 static const uint8_t tab_orientations[] = {0x68, 0xe8, 0xa8, 0x28, 0x08, 0x48, 0x88, 0xc8};
-//----------------------
 //----------------------
 void lcdSetOrientation(lcdOrientationTypeDef value)
 {
@@ -358,8 +366,6 @@ void lcdSetOrientation(lcdOrientationTypeDef value)
 	}
 
 }
-//**************************************************************************************************************
-
 //**************************************************************************************************************
 
 //**************************************************************************************************************

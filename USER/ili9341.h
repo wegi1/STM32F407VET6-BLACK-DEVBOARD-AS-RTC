@@ -10,9 +10,13 @@
 #define ILI9341_H_
 
 
-// FSMC_NE1 FSMC_A18
-//LCD_REG       (*(volatile u16*)((uint32_t)(0x60000000)))
-//LCD_RAM       (*(volatile u16*)((uint32_t)(0x60080000)))
+// FSMC_NE4 FSMC_A6
+//LCD_REG       (*(volatile u16*)((uint32_t)(0x6C000000)))
+//LCD_RAM       (*(volatile u16*)((uint32_t)(0x6C000080)))
+
+//FSMC_NE1 FSMC_A18
+//#define LCD_REG       (*(volatile u16*)((uint32_t)(0x60000000)))
+//#define LCD_RAM       (*(volatile u16*)((uint32_t)(0x60080000)))
 
 // |------------------------------|
 // |   LCD_PIN  |   CPU_PIN       |
@@ -43,8 +47,8 @@
 // |------------------------------|
 // | 19-RD      | PD4  [FSMC_NOE] |
 // | 20-WR      | PD5  [FSMC_NWE] |
-// | 21-RS      | PD13 [FSMC_A18] |
-// | 22-CS_M    | PD7  [FSMC_NE1] |
+// | 21-RS      | PD13 [FSMC_A18] | #define LCD_RAM       (*(volatile u16*)((uint32_t)(0x60080000)))
+// | 22-CS_M    | PD7  [FSMC_NE1] | #define LCD_REG       (*(volatile u16*)((uint32_t)(0x60000000)))
 // |------------------------------|
 // |    TFT CONTROL SIGNALS       |
 // |------------------------------|
@@ -56,7 +60,7 @@
 // |------------------------------|
 // |       LCD BACK LIGHT         |
 // |------------------------------|
-// | 28-BLK     | PB0 (OR 1?)     |
+// | 28-BLK     | PB0 (OR 1?)     | PB1 ---> TIM3_CHANNEL_4
 // |------------------------------|
 // | 29-SET     | NC              |
 // |------------------------------|
@@ -74,7 +78,8 @@
 //------------------------------------
 #include <inttypes.h>
 #include <stdbool.h>
-#include "stm32f4xx.h"
+#include "stm32f407xx.h"
+#include "types_h.h"
 //------------------------------------
 #define ILI9341_MEMCONTROL			0x36
 //------------------------------------
@@ -223,11 +228,11 @@ typedef struct
 #define   ILI_DISPON          0x29       // Display ON
 #define   ILI_CASET           0x2A       // Column Address Set (4 parametry 8b: SC[15..8], SC[7..0], EC[15..8], EC[7..0])
 #define   ILI_PASET           0x2B       // Page (row) Address Set (4 parametry 8b: SC[15..8], SC[7..0], EC[15..8], EC[7..0])
-#define   ILI_RAMWR           0x2C       // Memory Write (n parametrów 18b, wywo³ywana bez parametrów po CASET i PASET)
-//#define  ILI_RGBSET          0x2D       // Color Set (128 parametrów 8b, 32 dla R, 64 dla G i 32 dla B)
-//#define  ILI_RAMRD           0x2E       // Memory Read (n parametrów 18b)
+#define   ILI_RAMWR           0x2C       // Memory Write (n parametrï¿½w 18b, wywoï¿½ywana bez parametrï¿½w po CASET i PASET)
+//#define  ILI_RGBSET          0x2D       // Color Set (128 parametrï¿½w 8b, 32 dla R, 64 dla G i 32 dla B)
+//#define  ILI_RAMRD           0x2E       // Memory Read (n parametrï¿½w 18b)
 //#define  ILI_PLTAR           0x30       // Partial Area (4 parametry 8b: SR[15..8], SR[7..0], ER[15..8], ER[7..0])
-//#define  ILI_VSCRDEF         0x33       // Vertical Scrolling Definition (6 parametrów 8b)
+//#define  ILI_VSCRDEF         0x33       // Vertical Scrolling Definition (6 parametrï¿½w 8b)
 //#define  ILI_TEOFF           0x34       // Tearing Effect Line OFF
 //#define  ILI_TEON            0x35       // Tearing Effect Line ON (1 parametr 8b)
 #define   ILI_MADCTL          0x36       // Memory Access Control (1 parametr 8b)
@@ -235,7 +240,7 @@ typedef struct
 #define   ILI_IDMOFF          0x38       // Idle Mode OFF
 #define   ILI_IDMON           0x39       // Idle Mode ON
 #define   ILI_PIXSET          0x3A       // COLMOD: Pixel Format Set (1 parametr 8b)
-#define   ILI_RAMWRCont       0x3C       // Write Memory Continue (n parametrów 18b)
+#define   ILI_RAMWRCont       0x3C       // Write Memory Continue (n parametrï¿½w 18b)
 //#define  ILI_RAMRDCont       0x3E       // Read Memory Continue (odczytuje dummy byte i n danych 18b)
 //#define  ILI_STS             0x44       // Set Tear Scanline (2 parametry 8b)
 //#define  ILI_GS              0x45       // Get Scanline (odczytuje dummy i 2 bajty informacji)
@@ -274,13 +279,13 @@ typedef struct
 //#define  ILI_NVMPKEY         0xD1       // NV Memory Protection Key (3 parametry 8b)
 //#define  ILI_RDNVM           0xD2       // NV Memory Status Read (odczyt dummy byte i 2 bajty informacji)
 //#define  ILI_RDID4           0xD3       // Read ID4 (odczytuje dummy byte i 3 bajty informacji)
-#define   ILI_PGAMCTRL        0xE0       // Positive Gamma Correction (15 parametrów 8b)
-#define   ILI_NGAMCTRL        0xE1       // Negative Gamma Correction (15 parametrów 8b)
-//#define  ILI_DGAMCTRL1       0xE2       // Digital Gamma Control 1 (16 parametrów 8b)
-//#define  ILI_DGAMCTRL2       0xE3       // Digital Gamma Control 2 (16 parametrów 8b)
+#define   ILI_PGAMCTRL        0xE0       // Positive Gamma Correction (15 parametrï¿½w 8b)
+#define   ILI_NGAMCTRL        0xE1       // Negative Gamma Correction (15 parametrï¿½w 8b)
+//#define  ILI_DGAMCTRL1       0xE2       // Digital Gamma Control 1 (16 parametrï¿½w 8b)
+//#define  ILI_DGAMCTRL2       0xE3       // Digital Gamma Control 2 (16 parametrï¿½w 8b)
 //#define  ILI_IFCTL           0xF6       // Interface Control (3 parametry 8b)
 // EXTEND register control
-#define   ILI_PCA             0xCB       // Power Control A (5 parametrów 8b)
+#define   ILI_PCA             0xCB       // Power Control A (5 parametrï¿½w 8b)
 #define   ILI_PCB             0xCF       // Power Control B (3 parametry 8b)
 #define   ILI_DTCA_ic         0xE8       // Driver Timming Control A (3 parametry 8b) - for internal clock
 //#define  ILI_DTCA_ec         0xE9       // Driver Timming Control A (3 parametry 8b) - for external clock
@@ -442,6 +447,31 @@ typedef struct
 //00000111 11100000 GREEN 0x07E0
 //00000000 00011111 BLUE  0x001F
 //-------------------------------
+#define LCD_COLOR_BLUE          0x001F
+#define LCD_COLOR_GREEN         0x07E0
+#define LCD_COLOR_RED           0xF800
+#define LCD_COLOR_CYAN          0x07FF
+#define LCD_COLOR_MAGENTA       0xF81F
+#define LCD_COLOR_YELLOW        0xFFE0
+#define LCD_COLOR_LIGHTBLUE     0x841F
+#define LCD_COLOR_LIGHTGREEN    0x87F0
+#define LCD_COLOR_LIGHTRED      0xFC10
+#define LCD_COLOR_LIGHTCYAN     0x87FF
+#define LCD_COLOR_LIGHTMAGENTA  0xFC1F
+#define LCD_COLOR_LIGHTYELLOW   0xFFF0
+#define LCD_COLOR_DARKBLUE      0x0010
+#define LCD_COLOR_DARKGREEN     0x0400
+#define LCD_COLOR_DARKRED       0x8000
+#define LCD_COLOR_DARKCYAN      0x0410
+#define LCD_COLOR_DARKMAGENTA   0x8010
+#define LCD_COLOR_DARKYELLOW    0x8400
+#define LCD_COLOR_WHITE         0xFFFF
+#define LCD_COLOR_LIGHTGRAY     0xD69A
+#define LCD_COLOR_GRAY          0x8410
+#define LCD_COLOR_DARKGRAY      0x4208
+#define LCD_COLOR_BLACK         0x0000
+#define LCD_COLOR_BROWN         0xA145
+#define LCD_COLOR_ORANGE        0xFD20
 /*-------------------------------------------------------------------------------------------------- -----
 * Internal statement
 ---------------------------------------------------------------------------------------------------- ---*/
@@ -461,18 +491,13 @@ typedef struct
 /*-------------------------------------------------------------------------------------------------- -----
 * Resource definition
 ---------------------------------------------------------------------------------------------------- ---*/
-//typedef uint8_t       bool;
-typedef uint8_t       u8;
-typedef uint16_t      u16;
-typedef int16_t       s16;
-typedef uint32_t      u32;
 
 
 #define LCD_REG       (*(volatile u16*)((uint32_t)(0x60000000)))
 #define LCD_RAM       (*(volatile u16*)((uint32_t)(0x60080000)))
 #define swap(a,b) {u16 t=a;a=b;b=t;}
 //-------------------------------
-extern RNG_HandleTypeDef hrng;
+//extern RNG_HandleTypeDef hrng;
 //-------------------------------
 void LCD_ILI9341_init(void);
 

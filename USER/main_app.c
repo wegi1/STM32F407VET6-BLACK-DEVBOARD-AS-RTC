@@ -50,6 +50,7 @@ void calculate_8_dots(void);
 void calc_all_dots_01(void);
 
 extern void main_app(void);
+extern uint8_t test_stop(void);
 //======================================
 int8_t mat_A, mat_B, mat_C, mat_D, mat_E, mat_F ;
 

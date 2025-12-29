@@ -8,7 +8,7 @@
 //-------------------------
 #include "demos.h"
 #include "main.h"
-
+#include "ADT_F.h"
 //-------------------------
 
 //-------------------------
@@ -34,6 +34,7 @@ void demo_10(void);
 void demo_11(void);
 void demo_12(void);
 void demo_13(void);
+uint32_t randomize(void);
 static void LCD_CLS_BLACK(void);
 //--------------------------------------------------------
 __STATIC_INLINE void DelayMicro(__IO uint32_t micros);
@@ -269,10 +270,10 @@ void demo_10(void)
     //fillCircle(160,120,110,0xf800);
     for(i=0;i<2500;i++)
     {
-        fillCircle(HAL_RNG_GetRandomNumber(&hrng)%220 +50,
-                HAL_RNG_GetRandomNumber(&hrng)%140 +50,
-                HAL_RNG_GetRandomNumber(&hrng)%50,
-                LCD_RandColor());
+        fillCircle(randomize()%220 +50,
+        		randomize()%140 +50,
+				randomize()%50,
+				randomize()%0xffff);
         if(test_stop() != 0) { half_sec_delay(); return; } // check the stop action
     }
 
@@ -287,11 +288,11 @@ void demo_09(void)
 
     for(i=0;i<100;i++)
     {
-        color = LCD_RandColor();
-        x0 = HAL_RNG_GetRandomNumber(&hrng)%LCD_ROW_NUM;
-        x1 = HAL_RNG_GetRandomNumber(&hrng)%LCD_ROW_NUM;
-        y0 = HAL_RNG_GetRandomNumber(&hrng)%LCD_COL_NUM;
-        y1 = HAL_RNG_GetRandomNumber(&hrng)%LCD_COL_NUM;
+        color = randomize()%0xffff;
+        x0 = randomize()%LCD_ROW_NUM;
+        x1 = randomize()%LCD_ROW_NUM;
+        y0 = randomize()%LCD_COL_NUM;
+        y1 = randomize()%LCD_COL_NUM;
 
         LCD_No_Fill_Draw(color, x0, y0, x1, y1);
         HAL_Delay(10);
@@ -514,11 +515,11 @@ void demo_06(void)
     LCD_CLS_BLACK();
     for(i=0;i<2000;i++)
     {
-        color = LCD_RandColor();
-        x0 = HAL_RNG_GetRandomNumber(&hrng)%LCD_ROW_NUM;
-        x1 = HAL_RNG_GetRandomNumber(&hrng)%LCD_ROW_NUM;
-        y0 = HAL_RNG_GetRandomNumber(&hrng)%LCD_COL_NUM;
-        y1 = HAL_RNG_GetRandomNumber(&hrng)%LCD_COL_NUM;
+        color = randomize()%0xffff;
+        x0 = randomize()%LCD_ROW_NUM;
+        x1 = randomize()%LCD_ROW_NUM;
+        y0 = randomize()%LCD_COL_NUM;
+        y1 = randomize()%LCD_COL_NUM;
 
         LCD_DisARectangular(x0, y0, x1, y1, color);
         if(test_stop() != 0) {
@@ -540,7 +541,7 @@ void demo_05(void)
 
     for(i=0;i<LCD_COL_NUM;i++)
     {
-        LCD_DrawLine(LCD_RandColor(),0,i,LCD_ROW_NUM-1,i);
+        LCD_DrawLine(randomize()%0xffff,0,i,LCD_ROW_NUM-1,i);
         if(test_stop() != 0) {
         	half_sec_delay();
         	return;
@@ -550,7 +551,7 @@ void demo_05(void)
     half_sec_delay();
     for(i=0;i<LCD_ROW_NUM;i++)
     {
-        LCD_DrawLine(LCD_RandColor(),i,0,i,LCD_COL_NUM-1);
+        LCD_DrawLine(randomize()%0xffff,i,0,i,LCD_COL_NUM-1);
         if(test_stop() != 0) {
         	half_sec_delay();
         	return;
@@ -566,7 +567,7 @@ void demo_05(void)
 
     for(i=0;i<LCD_COL_NUM/2;i++)
     {
-        color = LCD_RandColor();
+        color = randomize()%0xffff;
         LCD_No_Fill_Draw(color,x0,y0,x1,y1);
         x0++;
         x1--;
@@ -587,10 +588,10 @@ void demo_04(void)
 
     for(i=0;i<1500;i++)
     {
-        LCD_DisALoop(HAL_RNG_GetRandomNumber(&hrng)%280+20,
-                HAL_RNG_GetRandomNumber(&hrng)%200+20,
-                HAL_RNG_GetRandomNumber(&hrng)%20,
-                LCD_RandColor());
+        LCD_DisALoop(randomize()%280+20,
+        		randomize()%200+20,
+				randomize()%20,
+				randomize()%0xffff);
         HAL_Delay(1);
         if(test_stop() != 0) {
         	half_sec_delay();
@@ -607,9 +608,9 @@ void demo_03(void)
 
     for(i=0;i<1000;i++)
     {
-        LCD_DrawLine(LCD_RandColor(),HAL_RNG_GetRandomNumber(&hrng)%LCD_ROW_NUM,
-                HAL_RNG_GetRandomNumber(&hrng)%LCD_COL_NUM,HAL_RNG_GetRandomNumber(&hrng)%LCD_ROW_NUM,
-                HAL_RNG_GetRandomNumber(&hrng)%LCD_COL_NUM);
+        LCD_DrawLine(randomize()%0xffff,randomize()%LCD_ROW_NUM,
+        		randomize()%LCD_COL_NUM,randomize()%LCD_ROW_NUM,
+				randomize()%LCD_COL_NUM);
         HAL_Delay(1);
         if(test_stop() != 0) {
         	half_sec_delay();
@@ -625,9 +626,9 @@ void demo_02(void)
     LCD_CLS_BLACK();
     for(i=0;i<15000;i++)
     {
-        LCD_Put_Pixel(HAL_RNG_GetRandomNumber(&hrng)%LCD_ROW_NUM,
-                HAL_RNG_GetRandomNumber(&hrng)%LCD_COL_NUM,
-                HAL_RNG_GetRandomNumber(&hrng)%0xffff);
+        LCD_Put_Pixel(randomize()%LCD_ROW_NUM,
+        		randomize()%LCD_COL_NUM,
+				randomize()%0xffff);
         DelayMicro(95);
         if(test_stop() != 0) {
         	half_sec_delay();
@@ -665,7 +666,13 @@ u16  getscanline(void)
     return(dat1*256 + dat2);
 }
 //-----------------------------------
+uint32_t randomize(void){
+	extern	RNG_HandleTypeDef hrng;
 
+	uint32_t data ;
+	HAL_RNG_GenerateRandomNumber(&hrng, &data);
+	return  data ;
+}
 
 
 

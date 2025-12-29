@@ -5,15 +5,18 @@
  *      Author: BOLO
  */
 
-#include "RTC.h"
+//#include "RTC.h"
+
 
 #include <time.h>
 #include "demos.h"
 #include "ili9341.h"
 
-#include "TP_operations.h"
-#include "XPT2046_touch.h"
-#include "TTF.H"
+#include "touch_panel.h"
+#include "stdio.h"
+//#include "fonty.h"
+//#include "dum.h"
+//#include "TEST.h"
 
 //=====================================================================================================================
 //=====================================================================================================================
@@ -24,13 +27,28 @@ extern uint8_t idy[13];
 extern lcdPropertiesTypeDef  lcdProperties;
 extern uint16_t lcd_text_color ;
 extern uint16_t lcd_background_color;
-extern uint16_t Paint_Color;
+
 
 extern SPI_HandleTypeDef hspi1;
 extern SPI_HandleTypeDef hspi2;
 extern RTC_HandleTypeDef hrtc;
 extern TIM_HandleTypeDef htim4;
 extern TIM_HandleTypeDef htim3;
+extern char tekst[30];
+
+extern void lcd_setup_picture(uint8_t pic_nr);
+extern uint32_t readPicFromFlash(uint8_t pic_nr);
+
+
+
+extern const unsigned char digital_7_ttf[] ;
+extern const unsigned char dum1_ttf[];
+
+extern int lcd_text_boxed(int pozx, int pozy, const char *text, const unsigned char *font_data, float pixel_height);
+extern int lcd_mono_text_boxed(int pozx, int pozy, const char *text, const unsigned char *font_data, float pixel_height);
+
+
+
 //extern
 //extern
 //extern
@@ -66,130 +84,95 @@ struct tm currTime;
 
 POINT   Pressed_Point ;
 
-uint8_t LCD_WORK_ORIENTATION = LCD_ORIENTATION_LANDSCAPE;
-uint8_t LCD_NOT_WORK_ORIENTATION ;
-uint8_t LCD_PORTRAIT_WORK_ORIENTATION ;
-uint8_t LCD_PORTRAIT_NOT_WORK_ORIENTATION ;
+extern uint8_t LCD_WORK_ORIENTATION ;
+extern uint8_t LCD_NOT_WORK_ORIENTATION ;
+extern uint8_t LCD_PORTRAIT_WORK_ORIENTATION ;
+extern uint8_t LCD_PORTRAIT_NOT_WORK_ORIENTATION ;
 //=====================================================================================================================
 //=====================================================================================================================
 //=====================================================================================================================
 
 extern void main_app(void);
 extern void do_calibrate(void);
-extern void start_Paint(void);
+extern void paint_proc(void);
 extern MATRIX  matrix ;
 extern void TIM4_IRQHandler(void);
 //=====================================================================================================================
 //=====================================================================================================================
 //=====================================================================================================================
 
+//=====================================================================================================================
+//=====================================================================================================================
+//=====================================================================================================================
+// TODO declarations of functions
 
+char* getDayofweek(uint8_t number);
+int calc_dow(int y, int m,int d);
+void set_RTC_DATE(void);
+
+void colon_print(void);
+void read_RTC(void);
+void print_RTC(void);
+void set_color_RTC(void);
+void test_print_RTC(void);
+void test_setup(void);
+bool clear_ss(void);
+bool set_hours(void);
+void put_number(uint8_t data);
+void get_pressed_point(void);
+uint8_t test_action(void);
+bool test_pressed_point(uint16_t xmin, uint16_t xmax, uint16_t ymin, uint16_t ymax);
+bool set_minuts(void);
+void check_RTC_DATE(void);
+bool set_year(void);
+void put_DATE_number(void);
+bool set_month(void);
+bool set_day(void);
+bool setting_globals(void);
+void wait_for_releasseTS(void);
+void paint_test(void);
+void TTF_test(void);
+void set_LIGHT(void);
+void set_PWM(void);
+void COLOR_FONTS(void);
+void night_mode(void);
+void check_night_mode(void);
+void CHECK_CALIBRATE_TIME_VALUES(void);
+void TIM_CALIBRATE_SETUP(void);
+uint8_t calibr_action(void);
+void next_page(void);
+void test_page(void);
+void CAL_TS(void) ;
+void SLIDE_SHOW(void);
+void DEMOS_RUN(void);
+void V_BALL(void);
+void check_work_orientation(void);
+void ROTATION_TEST(void);
+void slideshow_disable(void);
+void check_slideshow(void);
+void night_light(void);
+void set_night_PWM(void);
+void set_EPOCH(void);
+void compare_EPOCH();
+void read_timestamp(void);
+void SET_CENTURY(void);
+void READ_CENTURY(void);
+
+
+bool go_to_back(void);
+bool XPT2046_TouchPressed(void);
 
 //=====================================================================================================================
 //=====================================================================================================================
 //=====================================================================================================================
 
 
+
+//=====================================================================================================================
+//=====================================================================================================================
 //=====================================================================================================================
 
-/**
- * @brief test key1 (PE3) or screen (PC5) pressed
- *
- * @return != 0 = PRESSED
- */
-uint8_t test_stop(void) {
-	uint8_t result = 0;
-	if((KEY1_GPIO_Port->IDR & KEY1_Pin) == 0){ result = 1 ;} // key1 pressed?
-	if((T_PEN_GPIO_Port->IDR & T_PEN_Pin) == 0){ result = 1 ;} // screen pressed ?
-	if(result != 0){ HAL_Delay(20) ;}
-	return result;
-}
-//=====================================================================================
-void lcd_setup_picture(uint8_t pic_nr)
-{
-	uint8_t dana ;
-	lcdOrientationTypeDef dana2;
-
-
-
-	const lcdOrientationTypeDef setup_pic[] = {
-			LCD_WORK_ORIENTATION,
-			LCD_PORTRAIT_NOT_WORK_ORIENTATION,
-			LCD_PORTRAIT_WORK_ORIENTATION,
-			LCD_NOT_WORK_ORIENTATION,
-			LCD_NOT_WORK_ORIENTATION,
-			LCD_WORK_ORIENTATION,
-			LCD_WORK_ORIENTATION,
-			LCD_WORK_ORIENTATION,
-#define NOGITH // you can change this parameter to GITH for other pictures rotation definition
-#ifdef GITH
-			LCD_PORTRAIT_NOT_WORK_ORIENTATION,
-			LCD_PORTRAIT_WORK_ORIENTATION,
-			LCD_NOT_WORK_ORIENTATION,
-			LCD_NOT_WORK_ORIENTATION
-#else
-
-			LCD_NOT_WORK_ORIENTATION,
-			LCD_NOT_WORK_ORIENTATION,
-			LCD_NOT_WORK_ORIENTATION,
-			LCD_NOT_WORK_ORIENTATION
-#endif
-	};
-
-
-////---
-//extern	void check_work_orientation(void);
-////---
-
-
-    check_work_orientation();
-	lcdSetOrientation(LCD_WORK_ORIENTATION);
-	dana = pic_nr;
-	if (dana > 12) {dana =0;}
-	dana2 =  setup_pic[dana];
-	lcdSetOrientation(dana2);
-
-	LCD_OpenWin(0, 0, lcdProperties.width, lcdProperties.height);
-
-
-}
 //=====================================================================================================================
-uint32_t readPicFromFlash(uint8_t pic_nr)
-{
-	uint8_t page_data[256];
-	uint32_t i, i2, ADDR_PIC;
-	uint16_t* DATA_PAGE  = (uint16_t*) &page_data[0];
-	uint32_t command = 0x03;
-	uint8_t * tmpr1 = (uint8_t*) &ADDR_PIC;
-	uint8_t * tmpr2 = (uint8_t*) &command;
-
-	lcd_setup_picture(pic_nr);
-	ADDR_PIC = pic_nr * (600*256);
-
-	i2 = 3;
-    for(i=0; i<3; i++){
-    	tmpr2[i2] = tmpr1[i];
-    	i2--;
-    }
-
-	HAL_GPIO_WritePin(FLASH_CS_GPIO_Port, FLASH_CS_Pin, GPIO_PIN_RESET);
-	HAL_Delay(5);
-
-	HAL_SPI_Transmit(&hspi1,  tmpr2, 4, 5555);
-
-	for(i = 0; i < 600; i++) {
-		HAL_SPI_Receive(&hspi1, &page_data[0], 256, 5555);
-		for(i2 = 0; i2 < 128; i2++){
-			LCD_WriteData(DATA_PAGE[i2]);
-		}
-	}
-
-	HAL_GPIO_WritePin(FLASH_CS_GPIO_Port, FLASH_CS_Pin, GPIO_PIN_SET);
-	HAL_Delay(5);
-
-  return 0;
-}
-
 
 //=====================================================================================================================
 
@@ -243,8 +226,8 @@ void check_RTC_DATE(void){
 void colon_print(void){
 		TIM4->CR1 = TIM4->CR1 | 1;
 		HAL_TIM_Base_Start_IT(&htim4);
-		LCD_DisASquare(158, 36, 12, lcd_text_color);
-		LCD_DisASquare(158, 78, 12, lcd_text_color);
+		LCD_DisASquare(158, 30, 12, lcd_text_color);
+		LCD_DisASquare(158, 72, 12, lcd_text_color);
 }
 //=====================================================================================================================
 void read_RTC(void){
@@ -297,7 +280,7 @@ void print_RTC(void) {
 	lcd_mono_text_boxed(0, 125, tekst, digital_7_ttf, 40);
 
 
-	LCD_DisARectangular(200, 125, 319, 185, lcd_background_color); // clear for short name
+	LCD_DisARectangular(200, 123, 319, 188, lcd_background_color); // clear for short name
 	lcd_text_boxed(88, 140, getDayofweek(my_date.WeekDay), dum1_ttf, 42);
 
 	hh = my_date.Year + ((century - 1) * 100);
@@ -395,13 +378,16 @@ void test_print_RTC(void){
 			if(run_slideshow == 0) {
 				if(tmpr2 %5 == 0) {
 
+					uint8_t bckp = lcdProperties.orientation;
 					tmpr3 = tmpr2 / 5;
 					TIM4_IRQHandler(); // stop colon blinking
 
-					readPicFromFlash(tmpr3);
-					HAL_Delay(10000);
 					check_work_orientation();
 					lcdSetOrientation(LCD_WORK_ORIENTATION);
+
+					readPicFromFlash(tmpr3);
+					HAL_Delay(10000);
+					lcdSetOrientation(bckp);
 					LCD_ClrScr(lcd_background_color);
 
 					print_RTC();
@@ -526,6 +512,7 @@ void next_page(void) {
 // TODO: ACTUAL FUNCTION MAKING
 //=====================================================================================================================
 //=====================================================================================================================
+
 //=====================================================================================================================
 void SET_CENTURY(void) {
 
@@ -577,8 +564,6 @@ void SET_CENTURY(void) {
 		}
 	}
 }
-
-//=====================================================================================================================
 
 //=====================================================================================================================
 void READ_CENTURY(void) {
@@ -707,7 +692,6 @@ void night_light(void){
 
 
 }
-
 //=====================================================================================================================
 void slideshow_disable(void){
 	uint8_t s_mode, action;
@@ -754,8 +738,6 @@ void slideshow_disable(void){
 		}
 	}
 }
-//=====================================================================================================================
-
 //=====================================================================================================================
 void check_slideshow() {
 	run_slideshow = (uint8_t) (HAL_RTCEx_BKUPRead(&hrtc, RTC_BKP_DR6) & 0x01 );
@@ -905,13 +887,16 @@ void SLIDE_SHOW(void) {
 //=====================================================================================================================
 void CAL_TS(void) {
 	if(test_pressed_point(0, 159, 45, 95) == true)  {
+		uint8_t bckp = lcdProperties.orientation;
 		wait_for_releasseTS(); // wait for releasse TS
 		LCD_ClrScr(lcd_background_color);
 		__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_4, 65535);
-		lets_calibrate_ts(LCD_ORIENTATION_LANDSCAPE_ROTATE);
+		TouchPanel_Calibrate();
 		LCD_ClrScr(lcd_background_color);
-		Paint_Color = COLOR_565_WHITE;
-		start_Paint();
+
+		paint_proc();
+
+		lcdSetOrientation(bckp);
 
 		set_PWM();
 		wait_for_releasseTS(); // wait for releasse TS
@@ -930,7 +915,6 @@ void test_page(void) {
 		LCD_ClrScr(lcd_background_color);
 	}
 }
-//=====================================================================================================================
 //=====================================================================================================================
 void TIM_CALIBRATE_SETUP(void) {
 	uint8_t action ;
@@ -1018,6 +1002,7 @@ void TIM_CALIBRATE_SETUP(void) {
 uint8_t calibr_action(void) {
 	while(1) {
 		get_pressed_point();
+		HAL_Delay(200);
 		// DONE test
 		if((test_pressed_point(80, 240, 115, 165)) == true) { return 5;} // DONE
 
@@ -1036,8 +1021,6 @@ uint8_t calibr_action(void) {
 //
 //if((test_pressed_point(235, 318, 55, 110)) == true) { return 2;} // plus sec
 //if((test_pressed_point(235, 318, 110, 165)) == true) { return 4;} // plus hrs
-//=====================================================================================================================
-
 //=====================================================================================================================
 void CHECK_CALIBRATE_TIME_VALUES(void){
 	uint32_t hours ;
@@ -1118,8 +1101,6 @@ void night_mode(void) {
 	}
 
 }
-//=====================================================================================================================
-
 //=====================================================================================================================
 void COLOR_FONTS(void) {
 	uint8_t action;
@@ -1222,26 +1203,24 @@ void set_night_PWM(void) {
 }
 //=====================================================================================================================
 void TTF_test(void) {
-	extern uint16_t Paint_Color;
+
+	extern void Big_TTF_Demo(void);
 
 	if(test_pressed_point(159, 319, 45, 95) == true)  {
-		Paint_Color = COLOR_565_WHITE;
+
 		Big_TTF_Demo();
 		wait_for_releasseTS(); // wait for releasse TS
 		Pressed_Point.x =0;
 		Pressed_Point.y =0;
-		check_work_orientation();
-		lcdSetOrientation(LCD_WORK_ORIENTATION);
 	}
-
 }
 //=====================================================================================================================
 
 //=====================================================================================================================
 void paint_test(void) {
 	if(test_pressed_point(0, 159, 45, 95) == true)  {
-		Paint_Color = COLOR_565_WHITE;
-		start_Paint();
+
+		paint_proc();
 		wait_for_releasseTS(); // wait for releasse TS
 		Pressed_Point.x =0;
 		Pressed_Point.y =0;
@@ -1353,18 +1332,25 @@ bool set_year(void) {
 }
 //=====================================================================================================================
 void get_pressed_point(void){
-	POINT OneSample;
-	while(XPT2046_TouchPressed() != true);
-	while((XPT2046_GetFastCoordinates(&OneSample.x, &OneSample.y)) != true ){ ; }
-	getDisplayPoint( &Pressed_Point, &OneSample, &matrix ) ;
-	if(LCD_WORK_ORIENTATION == LCD_ORIENTATION_LANDSCAPE) {
+
+	POINT * Ptr;
+	while(XPT2046_TouchPressed() != true){ __asm volatile("":::"memory");}
+
+	HAL_Delay(5);
+	Pressed_Point.x =2222;
+	Pressed_Point.y =2222;
+	do
+	{
+		Ptr=Read_Ads7846();
+	}
+	while( Ptr == (void*)0 );
+
+	getDisplayPoint(&Pressed_Point, Ptr, &matrix );
+
+	if(LCD_WORK_ORIENTATION == LCD_ORIENTATION_LANDSCAPE_ROTATE ) {
 		Pressed_Point.x = 319 - Pressed_Point.x;
 		Pressed_Point.y = 239 - Pressed_Point.y;
 	}
-	my_utoa(&idx[0], Pressed_Point.x);
-	my_utoa(&idy[0], Pressed_Point.y);
-	wait_for_releasseTS(); // wait for releasse TS
-	HAL_Delay(20);
 }
 //=====================================================================================================================
 void test_setup(void)
@@ -1518,6 +1504,7 @@ void put_DATE_number(void){
 uint8_t test_action(void) {
 	while(1) {
 		get_pressed_point();
+		HAL_Delay(100);
 		// DONE test
 		if((test_pressed_point(80, 240, 172, 230)) == true) { return 3;}
 		if((test_pressed_point(235, 318, 55, 165)) == true) { return 2;}
@@ -1538,9 +1525,19 @@ bool test_pressed_point(uint16_t xmin, uint16_t xmax, uint16_t ymin, uint16_t ym
 	return false;
 }
 //=====================================================================================================================
-
-
-
+bool XPT2046_TouchPressed(void) {
+	return HAL_GPIO_ReadPin(LCDTP_IRQ_GPIO_Port, LCDTP_IRQ_Pin) == GPIO_PIN_RESET;
+}
 //=====================================================================================================================
 //=====================================================================================================================
+//=====================================================================================================================
+//=====================================================================================================================
+//=====================================================================================================================
+//=====================================================================================================================
+//=====================================================================================================================
+//=====================================================================================================================
+//=====================================================================================================================
+//=====================================================================================================================
+
+
 

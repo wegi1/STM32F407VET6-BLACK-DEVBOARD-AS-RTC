@@ -501,10 +501,10 @@ typedef struct
 #define LL_RTC_BKP_DR4                     0x00000004U
 #define LL_RTC_BKP_DR5                     0x00000005U
 #define LL_RTC_BKP_DR6                     0x00000006U
-#define LL_RTC_BKP_DR6                     0x00000007U
-#define LL_RTC_BKP_DR7                     0x00000008U
-#define LL_RTC_BKP_DR8                     0x00000009U
-#define LL_RTC_BKP_DR9                    0x0000000AU
+#define LL_RTC_BKP_DR7                     0x00000007U
+#define LL_RTC_BKP_DR8                     0x00000008U
+#define LL_RTC_BKP_DR9                     0x00000009U
+#define LL_RTC_BKP_DR10                    0x0000000AU
 #define LL_RTC_BKP_DR11                    0x0000000BU
 #define LL_RTC_BKP_DR12                    0x0000000CU
 #define LL_RTC_BKP_DR13                    0x0000000DU
@@ -2904,10 +2904,10 @@ __STATIC_INLINE uint32_t LL_RTC_WAKEUP_GetAutoReload(RTC_TypeDef *RTCx)
   *         @arg @ref LL_RTC_BKP_DR4
   *         @arg @ref LL_RTC_BKP_DR5
   *         @arg @ref LL_RTC_BKP_DR6
-  *         @arg @ref LL_RTC_BKP_DR6
   *         @arg @ref LL_RTC_BKP_DR7
   *         @arg @ref LL_RTC_BKP_DR8
   *         @arg @ref LL_RTC_BKP_DR9
+  *         @arg @ref LL_RTC_BKP_DR10
   *         @arg @ref LL_RTC_BKP_DR11
   *         @arg @ref LL_RTC_BKP_DR12
   *         @arg @ref LL_RTC_BKP_DR13
@@ -2943,10 +2943,10 @@ __STATIC_INLINE void LL_RTC_BAK_SetRegister(RTC_TypeDef *RTCx, uint32_t BackupRe
   *         @arg @ref LL_RTC_BKP_DR4
   *         @arg @ref LL_RTC_BKP_DR5
   *         @arg @ref LL_RTC_BKP_DR6
-  *         @arg @ref LL_RTC_BKP_DR6
   *         @arg @ref LL_RTC_BKP_DR7
   *         @arg @ref LL_RTC_BKP_DR8
   *         @arg @ref LL_RTC_BKP_DR9
+  *         @arg @ref LL_RTC_BKP_DR10
   *         @arg @ref LL_RTC_BKP_DR11
   *         @arg @ref LL_RTC_BKP_DR12
   *         @arg @ref LL_RTC_BKP_DR13

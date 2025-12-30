@@ -216,8 +216,8 @@ extern uint16_t lcd_background_color ;
 HAL_TIM_Base_Stop_IT(&htim4);
 TIM4->CR1 = TIM4->CR1 & 0xfffffffe;
 
-LCD_DisASquare(158, 36, 12, lcd_background_color);
-LCD_DisASquare(158, 78, 12, lcd_background_color);
+LCD_DisASquare(158, 30, 12, lcd_background_color);
+LCD_DisASquare(158, 72, 12, lcd_background_color);
 
 
   /* USER CODE END TIM4_IRQn 1 */

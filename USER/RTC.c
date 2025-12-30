@@ -412,7 +412,8 @@ bool setting_globals(void) {
 		LCD_ClrScr(lcd_background_color);
 
 		while(1){
-
+			check_work_orientation();
+			lcdSetOrientation(LCD_WORK_ORIENTATION);
 			lcd_text_boxed(0, 0, "GLOBAL FUNCTIONS", dum1_ttf, 36);
 
 			lcd_text_boxed(25, 50, "PAINT", dum1_ttf, 42);
@@ -456,7 +457,8 @@ void next_page(void) {
 
 
 	while(1){
-
+		check_work_orientation();
+		lcdSetOrientation(LCD_WORK_ORIENTATION);
 		lcd_text_boxed(10, 0, "OTHER FUNCTIONS", dum1_ttf, 36);
 
 		lcd_text_boxed(3, 50, "CAL_TS", dum1_ttf, 42);
@@ -1359,6 +1361,7 @@ void test_setup(void)
 	if((XPT2046_TouchPressed()) == false) { return; } // no touch pressed so good bye
 
 	get_pressed_point();  // get pressed points coords
+	wait_for_releasseTS();
 
 	if(clear_ss() == true) { return; } // clear seconds test
 	lcd_text_color = 0xFFFF;

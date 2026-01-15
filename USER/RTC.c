@@ -280,8 +280,8 @@ void print_RTC(void) {
 	lcd_mono_text_boxed(0, 125, tekst, digital_7_ttf, 40);
 
 
-	LCD_DisARectangular(200, 123, 319, 188, lcd_background_color); // clear for short name
-	LCD_DisARectangular(88, 178, 200, 188, lcd_background_color); // clear BOTTOM OF LETTERS
+	LCD_DisARectangular(88, 140, 319, 188, lcd_background_color); // clear for short name
+	
 	lcd_text_boxed(88, 140, getDayofweek(my_date.WeekDay), dum1_ttf, 42);
 
 	hh = my_date.Year + ((century - 1) * 100);
